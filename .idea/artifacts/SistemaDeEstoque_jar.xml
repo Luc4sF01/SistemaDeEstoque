@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="SistemaDeEstoque:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SistemaDeEstoque_jar</output-path>
+    <root id="archive" name="SistemaDeEstoque.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/../META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="SistemaDeEstoque" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/sqlite-jdbc-3.47.1.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/flatlaf-3.5.2.jar" path-in-jar="/" />
+      <element id="dir-copy" path="$PROJECT_DIR$/src/icons" />
+    </root>
+  </artifact>
+</component>
