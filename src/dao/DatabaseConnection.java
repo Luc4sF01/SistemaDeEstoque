@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseConnection {
-    // Caminho absoluto para o banco de dados
-    private static final String URL = "jdbc:sqlite:D:/ControleDeEstoque/estoque.db";
+    // Caminho dinâmico para o banco de dados, relativo ao diretório do projeto
+    private static final String URL = "jdbc:sqlite:" + System.getProperty("user.dir") + "/estoque.db";
 
     // Método para estabelecer conexão com o banco
     public static Connection connect() {
@@ -24,24 +24,24 @@ public class DatabaseConnection {
     // Método para criar as tabelas necessárias
     public static void createTable() {
         String sqlProdutos = """
-                    CREATE TABLE IF NOT EXISTS produtos (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        nome TEXT NOT NULL,
-                        preco REAL NOT NULL,
-                        quantidade INTEGER NOT NULL
-                    );
-                """;
+                CREATE TABLE IF NOT EXISTS produtos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    preco REAL NOT NULL,
+                    quantidade INTEGER NOT NULL
+                );
+            """;
 
         String sqlVendas = """
-                    CREATE TABLE IF NOT EXISTS vendas (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        produto_id INTEGER NOT NULL,
-                        quantidade INTEGER NOT NULL,
-                        valor_total REAL NOT NULL,
-                        data_venda TEXT NOT NULL,
-                        FOREIGN KEY (produto_id) REFERENCES produtos(id)
-                    );
-                """;
+                CREATE TABLE IF NOT EXISTS vendas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    produto_id INTEGER NOT NULL,
+                    quantidade INTEGER NOT NULL,
+                    valor_total REAL NOT NULL,
+                    data_venda TEXT NOT NULL,
+                    FOREIGN KEY (produto_id) REFERENCES produtos(id)
+                );
+            """;
 
         try (Connection conn = connect();
              Statement stmt = conn.createStatement()) {
@@ -67,7 +67,6 @@ public class DatabaseConnection {
             stmt.executeUpdate(sql);
             System.out.println("Coluna 'produto_nome' adicionada com sucesso!");
         } catch (SQLException e) {
-            // Verifica se a coluna já existe
             if (e.getMessage().contains("duplicate column name") || e.getMessage().contains("already exists")) {
                 System.out.println("A coluna 'produto_nome' já existe na tabela vendas.");
             } else {
