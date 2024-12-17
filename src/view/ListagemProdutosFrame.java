@@ -13,7 +13,7 @@ public class ListagemProdutosFrame extends JFrame {
     public ListagemProdutosFrame() {
         // Configurações da janela
         setTitle("Listagem de Produtos");
-        setSize(800, 600); // Ajuste para tamanho maior
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setLocationRelativeTo(null); // Centraliza a janela
@@ -24,8 +24,8 @@ public class ListagemProdutosFrame extends JFrame {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
-        // Tabela de produtos
-        String[] colunas = {"ID", "Nome", "Preço (R$)", "Quantidade"};
+        // Tabela de produtos (Sem ID agora)
+        String[] colunas = {"Nome", "Preço (R$)", "Quantidade"};
         DefaultTableModel tableModel = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -61,24 +61,27 @@ public class ListagemProdutosFrame extends JFrame {
             int selectedRow = tabela.getSelectedRow();
             if (selectedRow >= 0) {
                 try {
-                    int id = (int) tabela.getValueAt(selectedRow, 0);
-                    String nome = (String) tabela.getValueAt(selectedRow, 1);
-                    double preco = (double) tabela.getValueAt(selectedRow, 2);
-                    int quantidade = (int) tabela.getValueAt(selectedRow, 3);
+                    String nome = (String) tabela.getValueAt(selectedRow, 0);
+                    double preco = Double.parseDouble(tabela.getValueAt(selectedRow, 1).toString().replace("R$", "").replace(",", ".").trim());
+                    int quantidade = (int) tabela.getValueAt(selectedRow, 2);
 
-                    Produto produtoSelecionado = new Produto(nome, preco, quantidade);
-                    produtoSelecionado.setId(id);
+                    Produto produtoSelecionado = ProdutoDAO.buscarPorNome(nome);
 
-                    // Abre a janela de atualização
-                    AtualizarProdutoFrame atualizarFrame = new AtualizarProdutoFrame(produtoSelecionado);
+                    if (produtoSelecionado != null) {
+                        produtoSelecionado.setPreco(preco);
+                        produtoSelecionado.setQuantidade(quantidade);
 
-                    // Atualiza a tabela após fechar a janela de atualização
-                    atualizarFrame.addWindowListener(new java.awt.event.WindowAdapter() {
-                        @Override
-                        public void windowClosed(java.awt.event.WindowEvent e) {
-                            atualizarTabela(tableModel); // Recarrega os dados na tabela
-                        }
-                    });
+                        // Abre a janela de atualização
+                        AtualizarProdutoFrame atualizarFrame = new AtualizarProdutoFrame(produtoSelecionado);
+
+                        // Atualiza a tabela após fechar a janela de atualização
+                        atualizarFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+                            @Override
+                            public void windowClosed(java.awt.event.WindowEvent e) {
+                                atualizarTabela(tableModel); // Recarrega os dados na tabela
+                            }
+                        });
+                    }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
                             "Erro ao abrir a janela de atualização: " + ex.getMessage(),
@@ -95,18 +98,22 @@ public class ListagemProdutosFrame extends JFrame {
             int selectedRow = tabela.getSelectedRow();
             if (selectedRow >= 0) {
                 try {
-                    int id = (int) tabela.getValueAt(selectedRow, 0);
+                    String nome = (String) tabela.getValueAt(selectedRow, 0);
+                    Produto produto = ProdutoDAO.buscarPorNome(nome);
 
-                    int confirm = JOptionPane.showConfirmDialog(ListagemProdutosFrame.this,
-                            "Tem certeza que deseja excluir este produto?", "Confirmação", JOptionPane.YES_NO_OPTION);
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        ProdutoDAO.excluirProduto(id);
+                    if (produto != null) {
+                        int confirm = JOptionPane.showConfirmDialog(ListagemProdutosFrame.this,
+                                "Tem certeza que deseja excluir este produto?", "Confirmação", JOptionPane.YES_NO_OPTION);
 
-                        // Atualiza a tabela após a exclusão
-                        atualizarTabela(tableModel);
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            ProdutoDAO.excluirProduto(produto.getId());
 
-                        JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
-                                "Produto excluído com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                            // Atualiza a tabela após a exclusão
+                            atualizarTabela(tableModel);
+
+                            JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
+                                    "Produto excluído com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                        }
                     }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
@@ -124,7 +131,7 @@ public class ListagemProdutosFrame extends JFrame {
 
         // Adicionar os botões ao layout
         JPanel panelButtons = new JPanel();
-        panelButtons.setLayout(new GridLayout(1, 3, 10, 10)); // Configurar o layout para 3 botões
+        panelButtons.setLayout(new GridLayout(1, 3, 10, 10));
         panelButtons.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panelButtons.add(btnAtualizar);
         panelButtons.add(btnExcluir);
@@ -140,8 +147,8 @@ public class ListagemProdutosFrame extends JFrame {
         List<Produto> produtos = ProdutoDAO.listarProdutos(); // Recarrega os produtos do banco
 
         for (Produto p : produtos) {
-            Object[] rowData = {p.getId(), p.getNome(), p.getPreco(), p.getQuantidade()};
-            tableModel.addRow(rowData); // Adiciona novamente os produtos à tabela
+            Object[] rowData = {p.getNome(), String.format("R$ %.2f", p.getPreco()), p.getQuantidade()};
+            tableModel.addRow(rowData);
         }
     }
 }

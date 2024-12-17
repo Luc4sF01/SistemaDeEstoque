@@ -1,6 +1,7 @@
 package view;
 
 import dao.DatabaseConnection;
+import dao.ProdutoDAO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,6 +88,19 @@ public class MainFrame extends JFrame {
         JMenu menuArquivo = new JMenu("Arquivo");
         JMenu menuAjuda = new JMenu("Ajuda");
 
+        JMenuItem itemImportarCSV = new JMenuItem("Importar CSV");
+        itemImportarCSV.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Selecione o arquivo CSV");
+
+            int resultado = fileChooser.showOpenDialog(this);
+            if (resultado == JFileChooser.APPROVE_OPTION) {
+                String caminhoArquivo = fileChooser.getSelectedFile().getAbsolutePath();
+                ProdutoDAO.importarCSV(caminhoArquivo);
+                JOptionPane.showMessageDialog(this, "Arquivo CSV importado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
         JMenuItem itemAlternarTema = new JMenuItem("Alternar Tema");
         itemAlternarTema.addActionListener(e -> toggleTheme());
 
@@ -96,6 +110,7 @@ public class MainFrame extends JFrame {
         JMenuItem itemSobre = new JMenuItem("Sobre");
         itemSobre.addActionListener(e -> JOptionPane.showMessageDialog(this, "Sistema de Estoque v1.2\nDesenvolvido por Lucas\n© 2024"));
 
+        menuArquivo.add(itemImportarCSV);
         menuArquivo.add(itemAlternarTema);
         menuArquivo.add(itemSair);
         menuAjuda.add(itemSobre);
@@ -124,9 +139,8 @@ public class MainFrame extends JFrame {
         JButton botao = new JButton(texto);
         botao.setFont(new Font("Arial", Font.PLAIN, 24));
         try {
-            // Carrega e redimensiona o ícone
             ImageIcon icon = new ImageIcon(getClass().getResource(iconePath));
-            Image scaledIcon = icon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH); // Ajusta o tamanho do ícone
+            Image scaledIcon = icon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
             botao.setIcon(new ImageIcon(scaledIcon));
         } catch (Exception e) {
             System.err.println("Erro ao carregar ícone: " + iconePath);
@@ -138,9 +152,8 @@ public class MainFrame extends JFrame {
         botao.setPreferredSize(new Dimension(400, 80));
         botao.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(90, 93, 95)),
-                BorderFactory.createEmptyBorder(10, 20, 10, 20) // Padding interno
+                BorderFactory.createEmptyBorder(10, 20, 10, 20)
         ));
-
         return botao;
     }
 
@@ -151,7 +164,6 @@ public class MainFrame extends JFrame {
             System.err.println("Erro ao aplicar o Look and Feel: " + e.getMessage());
         }
 
-        // Cria as tabelas e inicializa a janela principal
         DatabaseConnection.createTable();
         new MainFrame();
     }

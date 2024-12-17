@@ -2,6 +2,8 @@ package dao;
 
 import model.Produto;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -50,6 +52,45 @@ public class ProdutoDAO {
             System.err.println("Erro ao cadastrar produto: " + e.getMessage());
         }
     }
+
+    // Novo método: Importar dados do CSV
+    public static void importarCSV(String caminhoArquivo) {
+        String sql = "INSERT INTO produtos (nome, preco, quantidade) VALUES (?, ?, ?)";
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo));
+             Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            String linha;
+            boolean primeiraLinha = true; // Para ignorar o cabeçalho
+
+            while ((linha = br.readLine()) != null) {
+                if (primeiraLinha) {
+                    primeiraLinha = false; // Pula a primeira linha
+                    continue;
+                }
+
+                String[] valores = linha.split(",");
+
+                if (valores.length >= 3) { // Verifica se há colunas suficientes
+                    String nome = valores[1].trim();
+                    double preco = Double.parseDouble(valores[2].trim());
+                    int quantidade = Integer.parseInt(valores[0].trim());
+
+                    pstmt.setString(1, nome);
+                    pstmt.setDouble(2, preco);
+                    pstmt.setInt(3, quantidade);
+
+                    pstmt.executeUpdate();
+                }
+            }
+            System.out.println("Importação do CSV concluída com sucesso!");
+        } catch (Exception e) {
+            System.err.println("Erro ao importar CSV: " + e.getMessage());
+        }
+    }
+
+
+
 
     // Método para listar todos os produtos
     public static List<Produto> listarProdutos() {
@@ -119,7 +160,7 @@ public class ProdutoDAO {
         }
     }
 
-    // Método para excluir um produto (agora estático)
+    // Método para excluir um produto
     public static void excluirProduto(int id) {
         String sql = "DELETE FROM produtos WHERE id = ?";
 
