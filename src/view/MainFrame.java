@@ -12,19 +12,27 @@ public class MainFrame extends JFrame {
     private JLabel titleLabel;
     private boolean isDarkTheme = true;
 
+    // 🎨 Paleta de cores personalizada
+    private final Color RAISIN_BLACK = new Color(38, 35, 34);
+    private final Color CAPUT_MORTUUM = new Color(99, 55, 44);
+    private final Color BURNT_SIENNA = new Color(201, 125, 96);
+    private final Color MELON = new Color(255, 188, 181);
+    private final Color ALMOND = new Color(242, 229, 215);
+    private final Color TEXT_COLOR = new Color(51, 51, 51); // Cinza escuro para textos
+
     public MainFrame() {
         // Configurações da janela principal
         setTitle("Sistema de Estoque");
-        setSize(900, 700); // Define um tamanho inicial
+        setSize(900, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        setLocationRelativeTo(null); // Centraliza a janela na tela
-        setMinimumSize(new Dimension(900, 700)); // Define um tamanho mínimo para a janela
+        setLocationRelativeTo(null);
+        setMinimumSize(new Dimension(900, 700));
 
         // Painel principal
         mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        mainPanel.setBackground(new Color(45, 45, 45));
+        mainPanel.setBackground(ALMOND);
 
         // Menu superior
         criarMenuSuperior();
@@ -32,44 +40,41 @@ public class MainFrame extends JFrame {
         // Título centralizado
         titleLabel = new JLabel("<html><center>Sistema de Estoque<br><span style='font-size:16px;'>Gerencie seu inventário com eficiência</span></center></html>", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0)); // Espaçamento extra
+        titleLabel.setForeground(TEXT_COLOR);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         mainPanel.add(titleLabel, BorderLayout.NORTH);
 
-        // Painel para os botões
+        // Painel dos botões
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         buttonPanel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(20, 0, 20, 0); // Espaçamento vertical entre os botões
+        gbc.insets = new Insets(20, 0, 20, 0);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER; // Para colocar cada botão em uma linha separada
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
 
-        // Criação dos botões
-        JButton btnCadastrar = criarBotao("Cadastrar Produto", "/icons/cadastrar produto.png");
-        JButton btnListar = criarBotao("Listar Produtos", "/icons/listar produtos.png");
-        JButton btnRegistrarVenda = criarBotao("Registrar Venda", "/icons/resgistar venda.png");
-        JButton btnRelatorio = criarBotao("Relatório de Vendas", "/icons/relatorio-de-negocios.png");
-        JButton btnSair = criarBotao("Sair", "/icons/sair.png");
+        // Botões estilizados
+        JButton btnCadastrar = criarBotao("Cadastrar Produto");
+        JButton btnListar = criarBotao("Listar Produtos");
+        JButton btnRegistrarVenda = criarBotao("Registrar Venda");
+        JButton btnRelatorio = criarBotao("Relatório de Vendas");
+        JButton btnSair = criarBotao("Sair");
 
-        // Adicionar os botões ao painel
         buttonPanel.add(btnCadastrar, gbc);
         buttonPanel.add(btnListar, gbc);
         buttonPanel.add(btnRegistrarVenda, gbc);
         buttonPanel.add(btnRelatorio, gbc);
         buttonPanel.add(btnSair, gbc);
 
-        // Adicionar o painel dos botões ao painel principal
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
 
         // Rodapé
         JLabel footerLabel = new JLabel("<html><center>Desenvolvido por Lucas - Versão 1.2<br><span style='font-size:12px;'>© 2024 Todos os direitos reservados</span></center></html>", SwingConstants.CENTER);
         footerLabel.setFont(new Font("Arial", Font.ITALIC, 12));
-        footerLabel.setForeground(Color.LIGHT_GRAY);
-        footerLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0)); // Espaçamento do rodapé
+        footerLabel.setForeground(TEXT_COLOR);
+        footerLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
         mainPanel.add(footerLabel, BorderLayout.SOUTH);
 
-        // Adicionar o painel principal à janela
         add(mainPanel);
 
         // Ações dos Botões
@@ -85,6 +90,8 @@ public class MainFrame extends JFrame {
     // Método para criar o menu superior
     private void criarMenuSuperior() {
         JMenuBar menuBar = new JMenuBar();
+        menuBar.setBackground(MELON);
+
         JMenu menuArquivo = new JMenu("Arquivo");
         JMenu menuAjuda = new JMenu("Ajuda");
 
@@ -125,46 +132,53 @@ public class MainFrame extends JFrame {
     private void toggleTheme() {
         isDarkTheme = !isDarkTheme;
         if (isDarkTheme) {
-            mainPanel.setBackground(new Color(45, 45, 45));
-            titleLabel.setForeground(Color.WHITE);
+            mainPanel.setBackground(RAISIN_BLACK);
+            titleLabel.setForeground(ALMOND);
         } else {
-            mainPanel.setBackground(new Color(245, 245, 245));
-            titleLabel.setForeground(Color.BLACK);
+            mainPanel.setBackground(ALMOND);
+            titleLabel.setForeground(TEXT_COLOR);
         }
         SwingUtilities.updateComponentTreeUI(this);
     }
 
     // Criação de Botões com Estilo
-    private JButton criarBotao(String texto, String iconePath) {
+    private JButton criarBotao(String texto) {
         JButton botao = new JButton(texto);
-        botao.setFont(new Font("Arial", Font.PLAIN, 24));
-        try {
-            ImageIcon icon = new ImageIcon(getClass().getResource(iconePath));
-            Image scaledIcon = icon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
-            botao.setIcon(new ImageIcon(scaledIcon));
-        } catch (Exception e) {
-            System.err.println("Erro ao carregar ícone: " + iconePath);
-        }
-        botao.setHorizontalAlignment(SwingConstants.LEFT);
+        botao.setFont(new Font("Arial", Font.PLAIN, 20));
+        botao.setForeground(TEXT_COLOR);
+        botao.setBackground(MELON);
         botao.setFocusPainted(false);
-        botao.setBackground(isDarkTheme ? new Color(70, 73, 75) : new Color(220, 220, 220));
-        botao.setForeground(isDarkTheme ? Color.WHITE : Color.BLACK);
-        botao.setPreferredSize(new Dimension(400, 80));
+        botao.setPreferredSize(new Dimension(300, 50));
         botao.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(90, 93, 95)),
+                BorderFactory.createLineBorder(BURNT_SIENNA),
                 BorderFactory.createEmptyBorder(10, 20, 10, 20)
         ));
+
+        // Efeito de hover no botão
+        botao.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                botao.setBackground(BURNT_SIENNA);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                botao.setBackground(MELON);
+            }
+        });
+
         return botao;
     }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatDarculaLaf());
-        } catch (Exception e) {
-            System.err.println("Erro ao aplicar o Look and Feel: " + e.getMessage());
-        }
-
-        DatabaseConnection.createTable();
-        new MainFrame();
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatDarculaLaf());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            DatabaseConnection.createTable();
+            new MainFrame();
+        });
     }
 }
