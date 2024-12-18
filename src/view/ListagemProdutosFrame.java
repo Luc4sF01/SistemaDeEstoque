@@ -24,24 +24,24 @@ public class ListagemProdutosFrame extends JFrame {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
-        // Tabela de produtos (Sem ID agora)
+        // Tabela de produtos
         String[] colunas = {"Nome", "Preço (R$)", "Quantidade"};
         DefaultTableModel tableModel = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Impede a edição direta das células
+                return false; // Impede edição das células
             }
         };
         JTable tabela = new JTable(tableModel);
         tabela.setFont(new Font("Arial", Font.PLAIN, 14));
         tabela.setRowHeight(25);
         tabela.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
-        tabela.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Seleção de apenas uma linha
+        tabela.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Preencher a tabela com os dados do banco
+        // Atualizar tabela com dados do banco
         atualizarTabela(tableModel);
 
-        // Adicionar a tabela a um painel com barra de rolagem
+        // Adicionar tabela a um painel com rolagem
         JScrollPane scrollPane = new JScrollPane(tabela);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(scrollPane, BorderLayout.CENTER);
@@ -50,11 +50,6 @@ public class ListagemProdutosFrame extends JFrame {
         JButton btnAtualizar = new JButton("Atualizar Produto");
         JButton btnExcluir = new JButton("Excluir Produto");
         JButton btnFechar = new JButton("Fechar");
-
-        // Estilo dos botões
-        btnAtualizar.setFont(new Font("Arial", Font.PLAIN, 14));
-        btnExcluir.setFont(new Font("Arial", Font.PLAIN, 14));
-        btnFechar.setFont(new Font("Arial", Font.PLAIN, 14));
 
         // Ação do botão "Atualizar Produto"
         btnAtualizar.addActionListener(e -> {
@@ -66,7 +61,6 @@ public class ListagemProdutosFrame extends JFrame {
                     int quantidade = (int) tabela.getValueAt(selectedRow, 2);
 
                     Produto produtoSelecionado = ProdutoDAO.buscarPorNome(nome);
-
                     if (produtoSelecionado != null) {
                         produtoSelecionado.setPreco(preco);
                         produtoSelecionado.setQuantidade(quantidade);
@@ -74,22 +68,19 @@ public class ListagemProdutosFrame extends JFrame {
                         // Abre a janela de atualização
                         AtualizarProdutoFrame atualizarFrame = new AtualizarProdutoFrame(produtoSelecionado);
 
-                        // Atualiza a tabela após fechar a janela de atualização
+                        // Recarregar tabela após atualização
                         atualizarFrame.addWindowListener(new java.awt.event.WindowAdapter() {
                             @Override
                             public void windowClosed(java.awt.event.WindowEvent e) {
-                                atualizarTabela(tableModel); // Recarrega os dados na tabela
+                                atualizarTabela(tableModel);
                             }
                         });
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
-                            "Erro ao abrir a janela de atualização: " + ex.getMessage(),
-                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Erro ao atualizar: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
-                        "Por favor, selecione um produto para atualizar.", "Erro", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selecione um produto para atualizar.", "Aviso", JOptionPane.WARNING_MESSAGE);
             }
         });
 
@@ -102,34 +93,25 @@ public class ListagemProdutosFrame extends JFrame {
                     Produto produto = ProdutoDAO.buscarPorNome(nome);
 
                     if (produto != null) {
-                        int confirm = JOptionPane.showConfirmDialog(ListagemProdutosFrame.this,
-                                "Tem certeza que deseja excluir este produto?", "Confirmação", JOptionPane.YES_NO_OPTION);
-
+                        int confirm = JOptionPane.showConfirmDialog(this, "Tem certeza que deseja excluir?", "Confirmação", JOptionPane.YES_NO_OPTION);
                         if (confirm == JOptionPane.YES_OPTION) {
                             ProdutoDAO.excluirProduto(produto.getId());
-
-                            // Atualiza a tabela após a exclusão
                             atualizarTabela(tableModel);
-
-                            JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
-                                    "Produto excluído com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.showMessageDialog(this, "Produto excluído com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                         }
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
-                            "Erro ao excluir o produto: " + ex.getMessage(),
-                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Erro ao excluir: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(ListagemProdutosFrame.this,
-                        "Por favor, selecione um produto para excluir.", "Erro", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Selecione um produto para excluir.", "Aviso", JOptionPane.WARNING_MESSAGE);
             }
         });
 
         // Ação do botão "Fechar"
         btnFechar.addActionListener(e -> dispose());
 
-        // Adicionar os botões ao layout
+        // Painel dos botões
         JPanel panelButtons = new JPanel();
         panelButtons.setLayout(new GridLayout(1, 3, 10, 10));
         panelButtons.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -138,10 +120,10 @@ public class ListagemProdutosFrame extends JFrame {
         panelButtons.add(btnFechar);
         add(panelButtons, BorderLayout.SOUTH);
 
-        setVisible(true); // Exibe a janela
+        setVisible(true);
     }
 
-    // Método para recarregar os dados da tabela
+    // Atualizar dados na tabela
     private void atualizarTabela(DefaultTableModel tableModel) {
         tableModel.setRowCount(0); // Limpa os dados da tabela
         List<Produto> produtos = ProdutoDAO.listarProdutos(); // Recarrega os produtos do banco
@@ -151,4 +133,5 @@ public class ListagemProdutosFrame extends JFrame {
             tableModel.addRow(rowData);
         }
     }
+
 }

@@ -31,11 +31,20 @@ public class Main {
             return; // Finaliza o programa em caso de falha crítica
         }
 
-        // Testar cadastro de produto e listar produtos
-        System.out.println("\n>>> Cadastrando produto de teste...");
-        Produto produto = new Produto("Shampoo", 19.99, 50);
-        ProdutoDAO.cadastrarProduto(produto);
+        // Caminho correto para o arquivo CSV
+        String caminhoCSV = "C:/Users/Lucas/Desktop/estoque.csv";
 
+        // Importar dados do CSV
+        System.out.println("\n>>> Importando dados do CSV...");
+        try {
+            ProdutoDAO.importarCSV(caminhoCSV);
+            System.out.println("Dados importados com sucesso!");
+        } catch (Exception e) {
+            System.err.println("Erro ao importar CSV: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Testar listagem de produtos
         System.out.println("\n>>> Listando produtos cadastrados...");
         List<Produto> produtos = ProdutoDAO.listarProdutos();
         if (produtos.isEmpty()) {

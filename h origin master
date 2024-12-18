@@ -1,0 +1,23 @@
+[33mcommit 302025b789f1a955dd15fb0e8541a6ce28066a48[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: Luc4sF01 <lucashfilipe@gmail.com>
+Date:   Tue Dec 17 20:35:43 2024 -0300
+
+    Atualizado estilo do relatório de vendas e filtros de data
+
+[33mcommit 0d5cd4cf5e39d5d367131a03f6977ce34bdc44c0[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Luc4sF01 <lucashfilipe@gmail.com>
+Date:   Mon Dec 16 11:52:31 2024 -0300
+
+    Atualizando o caminho do banco de dados para ser relativo
+
+[33mcommit 6cce5b9244a2d372a8bcceec79e067865dcd2242[m
+Author: Luc4sF01 <161084605+Luc4sF01@users.noreply.github.com>
+Date:   Mon Dec 16 11:27:08 2024 -0300
+
+    Create README.md
+
+[33mcommit db8dadc93713357c03b910c52783a40f2c49ff2a[m
+Author: Luc4sF01 <161084605+Luc4sF01@users.noreply.github.com>
+Date:   Mon Dec 16 11:19:09 2024 -0300
+
+    Primeiro commit: Subindo o projeto SistemaDeEstoque

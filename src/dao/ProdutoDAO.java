@@ -55,39 +55,69 @@ public class ProdutoDAO {
 
     // Novo método: Importar dados do CSV
     public static void importarCSV(String caminhoArquivo) {
-        String sql = "INSERT INTO produtos (nome, preco, quantidade) VALUES (?, ?, ?)";
+        String sqlInsert = "INSERT INTO produtos (nome, preco, quantidade) VALUES (?, ?, ?)";
+        String sqlCheck = "SELECT COUNT(*) AS total FROM produtos WHERE nome = ?";
+
         try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo));
              Connection conn = DatabaseConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmtInsert = conn.prepareStatement(sqlInsert);
+             PreparedStatement pstmtCheck = conn.prepareStatement(sqlCheck)) {
 
             String linha;
-            boolean primeiraLinha = true; // Para ignorar o cabeçalho
+            boolean primeiraLinha = true;
 
             while ((linha = br.readLine()) != null) {
                 if (primeiraLinha) {
-                    primeiraLinha = false; // Pula a primeira linha
+                    primeiraLinha = false; // Ignorar cabeçalho
+                    continue;
+                }
+
+                // Ignorar linhas inválidas ou totais
+                if (linha.contains("TOTAL:") || linha.trim().isEmpty()) {
                     continue;
                 }
 
                 String[] valores = linha.split(",");
 
-                if (valores.length >= 3) { // Verifica se há colunas suficientes
+                if (valores.length >= 6) {
                     String nome = valores[1].trim();
-                    double preco = Double.parseDouble(valores[2].trim());
-                    int quantidade = Integer.parseInt(valores[0].trim());
+                    String valorVendaStr = valores[5].trim().replace("R$", "").replace(",", ".");
+                    double preco;
+                    int quantidade;
 
-                    pstmt.setString(1, nome);
-                    pstmt.setDouble(2, preco);
-                    pstmt.setInt(3, quantidade);
+                    try {
+                        preco = Double.parseDouble(valorVendaStr);
+                        quantidade = Integer.parseInt(valores[0].trim());
+                    } catch (NumberFormatException e) {
+                        System.err.println("Linha ignorada (formato inválido): " + linha);
+                        continue;
+                    }
 
-                    pstmt.executeUpdate();
+                    // Verificar se o produto já existe
+                    pstmtCheck.setString(1, nome);
+                    ResultSet rs = pstmtCheck.executeQuery();
+
+                    if (rs.next() && rs.getInt("total") > 0) {
+                        System.out.println("Produto duplicado encontrado e ignorado: " + nome);
+                        continue; // Pula para a próxima linha
+                    }
+
+                    // Inserir produto no banco
+                    pstmtInsert.setString(1, nome);
+                    pstmtInsert.setDouble(2, preco);
+                    pstmtInsert.setInt(3, quantidade);
+                    pstmtInsert.executeUpdate();
+
+                    System.out.println("Produto importado: Nome: " + nome + ", Preço: " + preco + ", Quantidade: " + quantidade);
                 }
             }
-            System.out.println("Importação do CSV concluída com sucesso!");
+            System.out.println("Importação concluída!");
         } catch (Exception e) {
             System.err.println("Erro ao importar CSV: " + e.getMessage());
         }
     }
+
+
 
 
 
