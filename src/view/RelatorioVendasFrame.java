@@ -11,6 +11,8 @@ import java.util.List;
 
 public class RelatorioVendasFrame extends JFrame {
 
+    private JLabel totalLabel; // Novo campo para exibir o total das vendas
+
     public RelatorioVendasFrame() {
         setTitle("Relatório de Vendas");
         setSize(700, 500);
@@ -22,6 +24,7 @@ public class RelatorioVendasFrame extends JFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         add(titleLabel, BorderLayout.NORTH);
 
+        // Painel de filtros
         JPanel filterPanel = new JPanel(new FlowLayout());
         JLabel lblDataInicio = new JLabel("Data Início (YYYY-MM-DD):");
         JTextField txtDataInicio = new JTextField(10);
@@ -37,18 +40,26 @@ public class RelatorioVendasFrame extends JFrame {
 
         add(filterPanel, BorderLayout.NORTH);
 
+        // Tabela de vendas
         String[] colunas = {"ID", "Produto", "Quantidade", "Valor Total", "Data"};
         DefaultTableModel tableModel = new DefaultTableModel(colunas, 0);
         JTable tabela = new JTable(tableModel);
         add(new JScrollPane(tabela), BorderLayout.CENTER);
 
+        // Painel inferior com total e botão fechar
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        totalLabel = new JLabel("Total: R$ 0.00", SwingConstants.RIGHT);
+        totalLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        bottomPanel.add(totalLabel, BorderLayout.CENTER);
+
         JButton btnFechar = new JButton("Fechar");
-        JPanel bottomPanel = new JPanel(new FlowLayout());
-        bottomPanel.add(btnFechar);
+        bottomPanel.add(btnFechar, BorderLayout.EAST);
         add(bottomPanel, BorderLayout.SOUTH);
 
+        // Ação do botão Fechar
         btnFechar.addActionListener(e -> dispose());
 
+        // Ação do botão Filtrar
         btnFiltrar.addActionListener(e -> {
             String dataInicio = txtDataInicio.getText();
             String dataFim = txtDataFim.getText();
@@ -77,8 +88,10 @@ public class RelatorioVendasFrame extends JFrame {
         setVisible(true);
     }
 
+    // Atualiza a tabela e calcula o total das vendas
     private void atualizarTabela(DefaultTableModel tableModel, List<Venda> vendas) {
         tableModel.setRowCount(0);
+        double totalVendas = 0;
 
         for (Venda venda : vendas) {
             tableModel.addRow(new Object[]{
@@ -88,6 +101,10 @@ public class RelatorioVendasFrame extends JFrame {
                     venda.getValorTotal(),
                     venda.getDataVenda()
             });
+            totalVendas += venda.getValorTotal(); // Soma o valor total
         }
+
+        // Atualiza o JLabel com o total
+        totalLabel.setText(String.format("Total: R$ %.2f", totalVendas));
     }
 }

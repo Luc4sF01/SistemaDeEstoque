@@ -12,7 +12,7 @@ import java.util.List;
 
 public class VendaDAO {
 
-    // Método para registrar uma venda (ajustado para aceitar produtoNome)
+    // Método para registrar uma venda
     public static boolean registrarVenda(int produtoId, String produtoNome, int quantidade, double valorTotal, LocalDate dataVenda) {
         String sqlVenda = "INSERT INTO vendas (produto_id, produto_nome, quantidade, valor_total, data_venda) VALUES (?, ?, ?, ?, ?)";
         String sqlAtualizarEstoque = "UPDATE produtos SET quantidade = quantidade - ? WHERE id = ?";
@@ -73,37 +73,6 @@ public class VendaDAO {
             }
         } catch (SQLException e) {
             System.out.println("Erro ao buscar vendas por período: " + e.getMessage());
-        }
-
-        return vendas;
-    }
-
-    // Método para listar todas as vendas
-    public static List<Venda> listarTodasVendas() {
-        String sql = """
-            SELECT vendas.id, vendas.produto_nome, vendas.quantidade, vendas.valor_total, vendas.data_venda
-            FROM vendas
-            ORDER BY data_venda;
-        """;
-
-        List<Venda> vendas = new ArrayList<>();
-
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-
-            while (rs.next()) {
-                Venda venda = new Venda(
-                        rs.getInt("id"),
-                        rs.getString("produto_nome"),
-                        rs.getInt("quantidade"),
-                        rs.getDouble("valor_total"),
-                        rs.getString("data_venda")
-                );
-                vendas.add(venda);
-            }
-        } catch (SQLException e) {
-            System.out.println("Erro ao listar todas as vendas: " + e.getMessage());
         }
 
         return vendas;
