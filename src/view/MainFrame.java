@@ -2,178 +2,308 @@ package view;
 
 import dao.DatabaseConnection;
 import dao.ProdutoDAO;
+import com.formdev.flatlaf.FlatDarculaLaf;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.text.DecimalFormat;
+import java.util.Random;
 
 public class MainFrame extends JFrame {
 
-    private JPanel mainPanel;
-    private JLabel titleLabel;
-    private boolean isDarkTheme = true;
-
-    // 🎨 Paleta de cores personalizada
-    private final Color RAISIN_BLACK = new Color(38, 35, 34);
-    private final Color CAPUT_MORTUUM = new Color(99, 55, 44);
-    private final Color BURNT_SIENNA = new Color(201, 125, 96);
-    private final Color MELON = new Color(255, 188, 181);
-    private final Color ALMOND = new Color(242, 229, 215);
-    private final Color TEXT_COLOR = new Color(51, 51, 51); // Cinza escuro para textos
+    // Labels do dashboard (tiles) para atualização dos dados
+    private JLabel lblTotalProdutos;
+    private JLabel lblEstoqueBaixo;
+    private JLabel lblTotalVendas;
+    private JLabel lblVendasHoje;
 
     public MainFrame() {
-        // Configurações da janela principal
-        setTitle("Sistema de Estoque");
-        setSize(900, 700);
+        // Configurações principais da janela
+        setTitle("InnovaStock - Gestão Inovadora de Estoque");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setSize(1200, 800);
         setLocationRelativeTo(null);
-        setMinimumSize(new Dimension(900, 700));
+        setLayout(new BorderLayout());
 
-        // Painel principal
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        mainPanel.setBackground(ALMOND);
+        // Cria e define a barra de menu
+        setJMenuBar(criarMenuBar());
 
-        // Menu superior
-        criarMenuSuperior();
+        // Cabeçalho com título e slogan
+        add(criarPainelCabecalho(), BorderLayout.NORTH);
 
-        // Título centralizado
-        titleLabel = new JLabel("<html><center>Sistema de Estoque<br><span style='font-size:16px;'>Gerencie seu inventário com eficiência</span></center></html>", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
-        titleLabel.setForeground(TEXT_COLOR);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        // Sidebar (barra lateral) com botões de navegação
+        add(criarSidebar(), BorderLayout.WEST);
 
-        // Painel dos botões
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
-        buttonPanel.setOpaque(false);
+        // Painel central com o dashboard
+        add(criarPainelDashboard(), BorderLayout.CENTER);
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(20, 0, 20, 0);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-
-        // Botões estilizados
-        JButton btnCadastrar = criarBotao("Cadastrar Produto");
-        JButton btnListar = criarBotao("Listar Produtos");
-        JButton btnRegistrarVenda = criarBotao("Registrar Venda");
-        JButton btnRelatorio = criarBotao("Relatório de Vendas");
-        JButton btnSair = criarBotao("Sair");
-
-        buttonPanel.add(btnCadastrar, gbc);
-        buttonPanel.add(btnListar, gbc);
-        buttonPanel.add(btnRegistrarVenda, gbc);
-        buttonPanel.add(btnRelatorio, gbc);
-        buttonPanel.add(btnSair, gbc);
-
-        mainPanel.add(buttonPanel, BorderLayout.CENTER);
-
-        // Rodapé
-        JLabel footerLabel = new JLabel("<html><center>Desenvolvido por Lucas - Versão 1.2<br><span style='font-size:12px;'>© 2024 Todos os direitos reservados</span></center></html>", SwingConstants.CENTER);
-        footerLabel.setFont(new Font("Arial", Font.ITALIC, 12));
-        footerLabel.setForeground(TEXT_COLOR);
-        footerLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
-        mainPanel.add(footerLabel, BorderLayout.SOUTH);
-
-        add(mainPanel);
-
-        // Ações dos Botões
-        btnCadastrar.addActionListener(e -> new CadastroProdutoFrame());
-        btnListar.addActionListener(e -> new ListagemProdutosFrame());
-        btnRegistrarVenda.addActionListener(e -> new RegistrarVendaFrame());
-        btnRelatorio.addActionListener(e -> new RelatorioVendasFrame());
-        btnSair.addActionListener(e -> System.exit(0));
+        // Rodapé com créditos
+        add(criarRodape(), BorderLayout.SOUTH);
 
         setVisible(true);
     }
 
-    // Método para criar o menu superior
-    private void criarMenuSuperior() {
+    /**
+     * Cria a barra de menu superior com os itens "Arquivo" e "Ajuda".
+     */
+    private JMenuBar criarMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        menuBar.setBackground(MELON);
+        menuBar.setBackground(Color.WHITE);
 
+        // Menu Arquivo
         JMenu menuArquivo = new JMenu("Arquivo");
-        JMenu menuAjuda = new JMenu("Ajuda");
-
-        JMenuItem itemImportarCSV = new JMenuItem("Importar CSV");
-        itemImportarCSV.addActionListener(e -> {
+        JMenuItem miImportarCSV = new JMenuItem("Importar CSV");
+        miImportarCSV.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Selecione o arquivo CSV");
-
-            int resultado = fileChooser.showOpenDialog(this);
-            if (resultado == JFileChooser.APPROVE_OPTION) {
-                String caminhoArquivo = fileChooser.getSelectedFile().getAbsolutePath();
-                ProdutoDAO.importarCSV(caminhoArquivo);
-                JOptionPane.showMessageDialog(this, "Arquivo CSV importado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File arquivoSelecionado = fileChooser.getSelectedFile();
+                ProdutoDAO.importarCSV(arquivoSelecionado.getAbsolutePath());
+                JOptionPane.showMessageDialog(this, "CSV importado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             }
         });
+        JMenuItem miSair = new JMenuItem("Sair");
+        miSair.addActionListener(e -> System.exit(0));
+        menuArquivo.add(miImportarCSV);
+        menuArquivo.add(miSair);
 
-        JMenuItem itemAlternarTema = new JMenuItem("Alternar Tema");
-        itemAlternarTema.addActionListener(e -> toggleTheme());
-
-        JMenuItem itemSair = new JMenuItem("Sair");
-        itemSair.addActionListener(e -> System.exit(0));
-
-        JMenuItem itemSobre = new JMenuItem("Sobre");
-        itemSobre.addActionListener(e -> JOptionPane.showMessageDialog(this, "Sistema de Estoque v1.2\nDesenvolvido por Lucas\n© 2024"));
-
-        menuArquivo.add(itemImportarCSV);
-        menuArquivo.add(itemAlternarTema);
-        menuArquivo.add(itemSair);
-        menuAjuda.add(itemSobre);
+        // Menu Ajuda
+        JMenu menuAjuda = new JMenu("Ajuda");
+        JMenuItem miSobre = new JMenuItem("Sobre");
+        miSobre.addActionListener(e ->
+                JOptionPane.showMessageDialog(this, "InnovaStock v1.0\nDesenvolvido por Lucas\n© 2024", "Sobre", JOptionPane.INFORMATION_MESSAGE));
+        menuAjuda.add(miSobre);
 
         menuBar.add(menuArquivo);
         menuBar.add(menuAjuda);
-
-        setJMenuBar(menuBar);
+        return menuBar;
     }
 
-    // Método para alternar entre tema claro e escuro
-    private void toggleTheme() {
-        isDarkTheme = !isDarkTheme;
-        if (isDarkTheme) {
-            mainPanel.setBackground(RAISIN_BLACK);
-            titleLabel.setForeground(ALMOND);
-        } else {
-            mainPanel.setBackground(ALMOND);
-            titleLabel.setForeground(TEXT_COLOR);
-        }
-        SwingUtilities.updateComponentTreeUI(this);
+    /**
+     * Cria o cabeçalho com o nome do sistema e um slogan.
+     */
+    private JPanel criarPainelCabecalho() {
+        JPanel cabecalho = new JPanel(new BorderLayout());
+        cabecalho.setBackground(new Color(52, 152, 219));
+        cabecalho.setPreferredSize(new Dimension(getWidth(), 100));
+
+        JLabel titulo = new JLabel("InnovaStock", SwingConstants.CENTER);
+        titulo.setForeground(Color.WHITE);
+        titulo.setFont(new Font("SansSerif", Font.BOLD, 36));
+
+        JLabel slogan = new JLabel("Gestão Inovadora de Estoque", SwingConstants.CENTER);
+        slogan.setForeground(Color.WHITE);
+        slogan.setFont(new Font("SansSerif", Font.PLAIN, 18));
+
+        cabecalho.add(titulo, BorderLayout.CENTER);
+        cabecalho.add(slogan, BorderLayout.SOUTH);
+        return cabecalho;
     }
 
-    // Criação de Botões com Estilo
-    private JButton criarBotao(String texto) {
+    /**
+     * Cria a sidebar (barra lateral) com os botões de navegação.
+     */
+    private JPanel criarSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setBackground(new Color(44, 62, 80));
+        sidebar.setPreferredSize(new Dimension(250, getHeight()));
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+
+        // Botões de navegação
+        JButton btnCadastrarProduto = criarBotaoSidebar("Cadastrar Produto");
+        btnCadastrarProduto.addActionListener(e -> new CadastroProdutoFrame());
+
+        JButton btnListarProdutos = criarBotaoSidebar("Listar Produtos");
+        btnListarProdutos.addActionListener(e -> new ListagemProdutosFrame());
+
+        JButton btnRegistrarVenda = criarBotaoSidebar("Registrar Venda");
+        btnRegistrarVenda.addActionListener(e -> new RegistrarVendaFrame());
+
+        JButton btnRelatorioVendas = criarBotaoSidebar("Relatório de Vendas");
+        btnRelatorioVendas.addActionListener(e -> new RelatorioVendasFrame());
+
+        JButton btnAtualizarDashboard = criarBotaoSidebar("Atualizar Dashboard");
+        btnAtualizarDashboard.addActionListener(e -> atualizarDashboard());
+
+        JButton btnSair = criarBotaoSidebar("Sair");
+        btnSair.addActionListener(e -> System.exit(0));
+
+        // Adiciona os botões com espaçamentos
+        sidebar.add(btnCadastrarProduto);
+        sidebar.add(Box.createVerticalStrut(15));
+        sidebar.add(btnListarProdutos);
+        sidebar.add(Box.createVerticalStrut(15));
+        sidebar.add(btnRegistrarVenda);
+        sidebar.add(Box.createVerticalStrut(15));
+        sidebar.add(btnRelatorioVendas);
+        sidebar.add(Box.createVerticalStrut(15));
+        sidebar.add(btnAtualizarDashboard);
+        sidebar.add(Box.createVerticalGlue());
+        sidebar.add(btnSair);
+
+        return sidebar;
+    }
+
+    /**
+     * Cria um botão estilizado para a sidebar.
+     */
+    private JButton criarBotaoSidebar(String texto) {
         JButton botao = new JButton(texto);
-        botao.setFont(new Font("Arial", Font.PLAIN, 20));
-        botao.setForeground(TEXT_COLOR);
-        botao.setBackground(MELON);
+        botao.setAlignmentX(Component.CENTER_ALIGNMENT);
+        botao.setMaximumSize(new Dimension(220, 40));
+        botao.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        botao.setForeground(Color.WHITE);
+        botao.setBackground(new Color(52, 73, 94));
         botao.setFocusPainted(false);
-        botao.setPreferredSize(new Dimension(300, 50));
-        botao.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BURNT_SIENNA),
-                BorderFactory.createEmptyBorder(10, 20, 10, 20)
-        ));
+        botao.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        // Efeito de hover no botão
-        botao.addMouseListener(new java.awt.event.MouseAdapter() {
+        // Efeito de hover
+        botao.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                botao.setBackground(BURNT_SIENNA);
+            public void mouseEntered(MouseEvent e) {
+                botao.setBackground(new Color(41, 128, 185));
             }
 
             @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                botao.setBackground(MELON);
+            public void mouseExited(MouseEvent e) {
+                botao.setBackground(new Color(52, 73, 94));
             }
         });
-
         return botao;
+    }
+
+    /**
+     * Cria o painel central do dashboard com tiles informativos.
+     */
+    private JPanel criarPainelDashboard() {
+        JPanel dashboard = new JPanel(new BorderLayout());
+        dashboard.setBackground(Color.WHITE);
+        dashboard.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel lblDashboard = new JLabel("Dashboard", SwingConstants.LEFT);
+        lblDashboard.setFont(new Font("SansSerif", Font.BOLD, 24));
+        lblDashboard.setForeground(new Color(33, 33, 33));
+        dashboard.add(lblDashboard, BorderLayout.NORTH);
+
+        // Painel dos tiles em grid 2x2
+        JPanel tilesPanel = new JPanel(new GridLayout(2, 2, 20, 20));
+        tilesPanel.setBackground(Color.WHITE);
+
+        Color corTile = new Color(236, 240, 241);
+
+        // Tile: Total de Produtos
+        JPanel tileTotalProdutos = criarTile(corTile, "Total de Produtos");
+        lblTotalProdutos = new JLabel("0");
+        configurarValorTile(lblTotalProdutos);
+        tileTotalProdutos.add(lblTotalProdutos);
+
+        // Tile: Estoque Baixo
+        JPanel tileEstoqueBaixo = criarTile(corTile, "Estoque Baixo");
+        lblEstoqueBaixo = new JLabel("0");
+        configurarValorTile(lblEstoqueBaixo);
+        tileEstoqueBaixo.add(lblEstoqueBaixo);
+
+        // Tile: Total de Vendas
+        JPanel tileTotalVendas = criarTile(corTile, "Total de Vendas");
+        lblTotalVendas = new JLabel("R$ 0,00");
+        configurarValorTile(lblTotalVendas);
+        tileTotalVendas.add(lblTotalVendas);
+
+        // Tile: Vendas Hoje
+        JPanel tileVendasHoje = criarTile(corTile, "Vendas Hoje");
+        lblVendasHoje = new JLabel("0");
+        configurarValorTile(lblVendasHoje);
+        tileVendasHoje.add(lblVendasHoje);
+
+        tilesPanel.add(tileTotalProdutos);
+        tilesPanel.add(tileEstoqueBaixo);
+        tilesPanel.add(tileTotalVendas);
+        tilesPanel.add(tileVendasHoje);
+
+        dashboard.add(tilesPanel, BorderLayout.CENTER);
+
+        // Botão de atualização dos dados do dashboard
+        JPanel painelRefresh = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        painelRefresh.setBackground(Color.WHITE);
+        JButton btnRefresh = new JButton("Atualizar Dados");
+        btnRefresh.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        btnRefresh.setBackground(new Color(52, 152, 219));
+        btnRefresh.setForeground(Color.WHITE);
+        btnRefresh.setFocusPainted(false);
+        btnRefresh.addActionListener(e -> atualizarDashboard());
+        painelRefresh.add(btnRefresh);
+        dashboard.add(painelRefresh, BorderLayout.SOUTH);
+
+        // Inicializa os dados do dashboard (valores simulados)
+        atualizarDashboard();
+
+        return dashboard;
+    }
+
+    /**
+     * Cria um painel (tile) para o dashboard, com título e estilo definidos.
+     */
+    private JPanel criarTile(Color cor, String tituloTile) {
+        JPanel tile = new JPanel();
+        tile.setBackground(cor);
+        tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
+        tile.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel titulo = new JLabel(tituloTile);
+        titulo.setFont(new Font("SansSerif", Font.BOLD, 18));
+        titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        tile.add(titulo);
+        tile.add(Box.createVerticalStrut(10));
+        return tile;
+    }
+
+    /**
+     * Configura o estilo dos valores exibidos nos tiles.
+     */
+    private void configurarValorTile(JLabel label) {
+        label.setFont(new Font("SansSerif", Font.PLAIN, 32));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setForeground(new Color(33, 33, 33));
+    }
+
+    /**
+     * Cria o rodapé com os créditos do sistema.
+     */
+    private JPanel criarRodape() {
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        rodape.setBackground(new Color(189, 195, 199));
+        JLabel lblRodape = new JLabel("Desenvolvido por Lucas - Versão 1.2 © 2024");
+        lblRodape.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        rodape.add(lblRodape);
+        return rodape;
+    }
+
+    /**
+     * Atualiza os dados do dashboard com valores simulados.
+     * (Substitua por chamadas reais ao banco, se disponível.)
+     */
+    private void atualizarDashboard() {
+        Random random = new Random();
+        int totalProdutos = random.nextInt(800) + 200;          // 200 a 999 produtos
+        int estoqueBaixo = random.nextInt(50);                    // 0 a 49 itens em estoque baixo
+        double totalVendas = random.nextDouble() * 100000;        // Valor em vendas
+        int vendasHoje = random.nextInt(100);                     // 0 a 99 vendas no dia
+
+        DecimalFormat df = new DecimalFormat("#,###.00");
+
+        lblTotalProdutos.setText(String.valueOf(totalProdutos));
+        lblEstoqueBaixo.setText(String.valueOf(estoqueBaixo));
+        lblTotalVendas.setText("R$ " + df.format(totalVendas));
+        lblVendasHoje.setText(String.valueOf(vendasHoje));
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatDarculaLaf());
+                UIManager.setLookAndFeel(new FlatDarculaLaf());
             } catch (Exception e) {
                 e.printStackTrace();
             }

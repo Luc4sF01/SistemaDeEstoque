@@ -1,203 +1,208 @@
 package view;
 
 import dao.ProdutoDAO;
-import dao.VendaDAO;
 import model.Produto;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
 public class RegistrarVendaFrame extends JFrame {
 
-    private JPanel mainPanel;
-    private JPanel productListPanel;
-    private JLabel totalLabel;
-    private JTextField valorPagoField;
-    private JLabel trocoLabel;
-    private JButton btnSalvar;
-    private JButton btnCancelar;
-    private JButton btnMais;
-    private JButton btnCalcularTroco;
-
-    private ArrayList<JPanel> produtoLinhas;
-    private ProdutoDAO produtoDAO;
-
-    // Paleta de cores
-    private final Color RAISIN_BLACK = new Color(38, 35, 34);
-    private final Color MELON = new Color(255, 188, 181);
-    private final Color BURNT_SIENNA = new Color(201, 125, 96);
-    private final Color ALMOND = new Color(242, 229, 215);
-    private final Color TEXT_COLOR = new Color(51, 51, 51);
+    private DefaultTableModel tableModel;
+    private List<Produto> produtosDisponiveis;
+    private List<Produto> produtosSelecionados;
+    private JLabel lblValorTotal;
 
     public RegistrarVendaFrame() {
-        setTitle("Registrar Venda");
-        setSize(800, 600);
-        setLocationRelativeTo(null);
+        produtosDisponiveis = ProdutoDAO.listarProdutos();
+        produtosSelecionados = new ArrayList<>();
+
+        setTitle("Registrar Venda - Seleção de Produtos");
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // Abre a tela maximizada
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-        produtoDAO = new ProdutoDAO();
-        produtoLinhas = new ArrayList<>();
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.decode("#F9FAFB"));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
-        // Painel principal
-        mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        mainPanel.setBackground(ALMOND);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         // Título
-        JLabel titleLabel = new JLabel("Registrar Venda", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
-        titleLabel.setForeground(TEXT_COLOR);
-        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        JLabel titleLabel = new JLabel("Registrar Venda - Seleção de Produtos", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        titleLabel.setForeground(Color.decode("#4A4E69"));
+        panel.add(titleLabel, gbc);
 
-        // Painel de lista de produtos
-        productListPanel = new JPanel();
-        productListPanel.setLayout(new BoxLayout(productListPanel, BoxLayout.Y_AXIS));
-        productListPanel.setBackground(ALMOND);
+        // Campo de produto com autocomplete
+        JLabel lblProduto = new JLabel("Produto:");
+        lblProduto.setFont(new Font("SansSerif", Font.BOLD, 18));
+        panel.add(lblProduto, gbc);
 
-        JScrollPane scrollPane = new JScrollPane(productListPanel);
-        scrollPane.setBorder(BorderFactory.createLineBorder(RAISIN_BLACK, 2));
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        JComboBox<String> cbProduto = new JComboBox<>();
+        cbProduto.setEditable(true);
+        carregarProdutos(cbProduto);
+        cbProduto.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        cbProduto.setPreferredSize(new Dimension(500, 30));
+        panel.add(cbProduto, gbc);
 
-        // Painel inferior
-        JPanel bottomPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-        bottomPanel.setBackground(ALMOND);
+        // Campo de quantidade
+        JLabel lblQuantidade = new JLabel("Quantidade:");
+        lblQuantidade.setFont(new Font("SansSerif", Font.BOLD, 18));
+        panel.add(lblQuantidade, gbc);
 
-        bottomPanel.add(new JLabel("Valor Total:", SwingConstants.RIGHT));
-        totalLabel = new JLabel("R$ 0.00");
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        bottomPanel.add(totalLabel);
+        JTextField txtQuantidade = new JTextField();
+        txtQuantidade.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        txtQuantidade.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.decode("#CCCCCC"), 1, true),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        txtQuantidade.setPreferredSize(new Dimension(500, 30));
+        panel.add(txtQuantidade, gbc);
 
-        bottomPanel.add(new JLabel("Valor Pago:", SwingConstants.RIGHT));
-        valorPagoField = new JTextField();
-        valorPagoField.setFont(new Font("Arial", Font.PLAIN, 16));
-        bottomPanel.add(valorPagoField);
+        // Tabela para produtos adicionados
+        JLabel lblTabela = new JLabel("Produtos Adicionados:");
+        lblTabela.setFont(new Font("SansSerif", Font.BOLD, 18));
+        panel.add(lblTabela, gbc);
 
-        bottomPanel.add(new JLabel("Troco:", SwingConstants.RIGHT));
-        trocoLabel = new JLabel("R$ 0.00");
-        trocoLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        bottomPanel.add(trocoLabel);
+        String[] colunas = {"Produto", "Preço Unitário", "Quantidade", "Subtotal"};
+        tableModel = new DefaultTableModel(colunas, 0);
+        JTable tabelaProdutos = new JTable(tableModel);
+        tabelaProdutos.setRowHeight(30);
+        JScrollPane scrollPane = new JScrollPane(tabelaProdutos);
+        scrollPane.setPreferredSize(new Dimension(1000, 500)); // Aumenta a altura mínima da lista
+        scrollPane.setBorder(BorderFactory.createLineBorder(Color.decode("#E5E5E5")));
+        panel.add(scrollPane, gbc);
 
-        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+        // Valor total
+        lblValorTotal = new JLabel("Valor Total: R$ 0,00");
+        lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 22));
+        lblValorTotal.setForeground(Color.decode("#1D3557"));
+        panel.add(lblValorTotal, gbc);
 
         // Botões
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        actionPanel.setBackground(ALMOND);
+        JButton btnAdicionar = criarBotao("Adicionar Produto", "#457B9D", "#1D3557");
+        JButton btnRemover = criarBotao("Remover Produto", "#E63946", "#C0392B");
+        JButton btnProximo = criarBotao("Próximo", "#457B9D", "#1D3557");
 
-        btnMais = criarBotao("+", MELON, BURNT_SIENNA);
-        btnMais.addActionListener(e -> adicionarLinhaProduto());
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(btnAdicionar);
+        buttonPanel.add(btnRemover);
+        buttonPanel.add(btnProximo);
+        buttonPanel.setBackground(Color.decode("#F9FAFB"));
+        panel.add(buttonPanel, gbc);
 
-        btnCalcularTroco = criarBotao("Calcular Troco", MELON, BURNT_SIENNA);
-        btnCalcularTroco.addActionListener(e -> calcularTroco());
+        // Ação do botão Adicionar
+        btnAdicionar.addActionListener(e -> {
+            try {
+                String produtoSelecionado = (String) cbProduto.getSelectedItem();
+                Produto produto = produtosDisponiveis.stream()
+                        .filter(p -> p.getNome().equals(produtoSelecionado))
+                        .findFirst()
+                        .orElse(null);
 
-        btnSalvar = criarBotao("Salvar", MELON, BURNT_SIENNA);
-        btnSalvar.addActionListener(e -> salvarVenda());
+                if (produto == null) {
+                    JOptionPane.showMessageDialog(this, "Produto não encontrado!", "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-        btnCancelar = criarBotao("Cancelar", MELON, BURNT_SIENNA);
-        btnCancelar.addActionListener(e -> dispose());
+                int quantidade = Integer.parseInt(txtQuantidade.getText().trim());
+                if (quantidade <= 0) {
+                    JOptionPane.showMessageDialog(this, "A quantidade deve ser maior que zero!", "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-        actionPanel.add(btnMais);
-        actionPanel.add(btnCalcularTroco);
-        actionPanel.add(btnSalvar);
-        actionPanel.add(btnCancelar);
+                double subtotal = produto.getPreco() * quantidade;
+                tableModel.addRow(new Object[]{produto.getNome(), String.format("R$ %.2f", produto.getPreco()), quantidade, String.format("R$ %.2f", subtotal)});
 
-        mainPanel.add(actionPanel, BorderLayout.NORTH);
-        add(mainPanel);
+                produtosSelecionados.add(produto);
+                produtosDisponiveis.remove(produto);
+                cbProduto.removeItem(produto.getNome());
+                txtQuantidade.setText("");
+
+                atualizarValorTotal();
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Digite uma quantidade válida!", "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        // Ação do botão Remover
+        btnRemover.addActionListener(e -> {
+            int selectedRow = tabelaProdutos.getSelectedRow();
+            if (selectedRow != -1) {
+                String nomeProduto = (String) tableModel.getValueAt(selectedRow, 0);
+                Produto produto = produtosSelecionados.stream()
+                        .filter(p -> p.getNome().equals(nomeProduto))
+                        .findFirst()
+                        .orElse(null);
+
+                if (produto != null) {
+                    produtosDisponiveis.add(produto);
+                    cbProduto.addItem(produto.getNome());
+                    produtosSelecionados.remove(produto);
+                }
+
+                tableModel.removeRow(selectedRow);
+                atualizarValorTotal();
+            } else {
+                JOptionPane.showMessageDialog(this, "Selecione um produto para remover!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+
+        // Ação do botão Próximo
+        btnProximo.addActionListener(e -> {
+            if (produtosSelecionados.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Adicione pelo menos um produto para continuar!", "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            new MetodoPagamentoFrame(produtosSelecionados);
+            dispose();
+        });
+
+        add(panel);
         setVisible(true);
-
-        adicionarLinhaProduto();
     }
 
-    private JButton criarBotao(String texto, Color corNormal, Color corHover) {
+    private void carregarProdutos(JComboBox<String> cbProduto) {
+        for (Produto produto : produtosDisponiveis) {
+            cbProduto.addItem(produto.getNome());
+        }
+    }
+
+    private void atualizarValorTotal() {
+        double total = 0;
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String subtotalStr = tableModel.getValueAt(i, 3).toString().replace("R$", "").replace(",", ".").trim();
+            total += Double.parseDouble(subtotalStr);
+        }
+        lblValorTotal.setText(String.format("Valor Total: R$ %.2f", total));
+    }
+
+    private JButton criarBotao(String texto, String corPrincipal, String corHover) {
         JButton botao = new JButton(texto);
-        botao.setFont(new Font("Arial", Font.PLAIN, 16));
-        botao.setBackground(corNormal);
-        botao.setForeground(TEXT_COLOR);
+        botao.setFont(new Font("SansSerif", Font.BOLD, 16));
+        botao.setForeground(Color.WHITE);
+        botao.setBackground(Color.decode(corPrincipal));
         botao.setFocusPainted(false);
-        botao.setBorder(BorderFactory.createLineBorder(BURNT_SIENNA));
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         botao.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                botao.setBackground(corHover);
+                botao.setBackground(Color.decode(corHover));
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                botao.setBackground(corNormal);
+                botao.setBackground(Color.decode(corPrincipal));
             }
         });
+
         return botao;
-    }
-
-    private void adicionarLinhaProduto() {
-        JPanel produtoLinha = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        produtoLinha.setBackground(ALMOND);
-
-        JComboBox<String> comboProdutos = new JComboBox<>();
-        for (Produto produto : produtoDAO.listarProdutos()) {
-            comboProdutos.addItem(produto.getNome());
-        }
-        JTextField quantidadeField = new JTextField();
-        quantidadeField.setPreferredSize(new Dimension(80, 30));
-        quantidadeField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                calcularTotal();
-            }
-        });
-
-        JButton btnMenos = criarBotao("-", MELON, BURNT_SIENNA);
-        btnMenos.setPreferredSize(new Dimension(50, 30));
-        btnMenos.addActionListener(e -> removerLinhaProduto(produtoLinha));
-
-        produtoLinha.add(comboProdutos);
-        produtoLinha.add(quantidadeField);
-        produtoLinha.add(btnMenos);
-        produtoLinhas.add(produtoLinha);
-        productListPanel.add(produtoLinha);
-        productListPanel.revalidate();
-        productListPanel.repaint();
-    }
-
-    private void removerLinhaProduto(JPanel produtoLinha) {
-        produtoLinhas.remove(produtoLinha);
-        productListPanel.remove(produtoLinha);
-        productListPanel.revalidate();
-        productListPanel.repaint();
-        calcularTotal();
-    }
-
-    private void calcularTotal() {
-        double total = 0.0;
-        for (JPanel produtoLinha : produtoLinhas) {
-            JComboBox<String> combo = (JComboBox<String>) produtoLinha.getComponent(0);
-            JTextField quantidadeField = (JTextField) produtoLinha.getComponent(1);
-            String nome = (String) combo.getSelectedItem();
-            if (nome != null && quantidadeField.getText().matches("\\d+")) {
-                Produto produto = produtoDAO.buscarPorNome(nome);
-                total += produto.getPreco() * Integer.parseInt(quantidadeField.getText());
-            }
-        }
-        totalLabel.setText(String.format("R$ %.2f", total));
-    }
-
-    private void calcularTroco() {
-        try {
-            double total = Double.parseDouble(totalLabel.getText().replace("R$", "").replace(",", "."));
-            double pago = Double.parseDouble(valorPagoField.getText().replace(",", "."));
-            double troco = pago - total;
-
-            if (troco >= 0) {
-                trocoLabel.setText(String.format("R$ %.2f", troco));
-            } else {
-                trocoLabel.setText("R$ 0.00");
-                JOptionPane.showMessageDialog(this, "Valor pago é menor que o total!", "Aviso", JOptionPane.WARNING_MESSAGE);
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Insira um valor válido para o pagamento.", "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void salvarVenda() {
-        JOptionPane.showMessageDialog(this, "Venda registrada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-        dispose();
     }
 }

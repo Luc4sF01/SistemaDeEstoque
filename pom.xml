@@ -21,6 +21,17 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.47.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version> <!-- Certifique-se de usar uma versão recente -->
+        </dependency>
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-swing</artifactId>
+            <version>5.3</version>
+        </dependency>
+
 
         <!-- FlatLaf para Interface Gráfica Moderna -->
         <dependency>
@@ -29,6 +40,7 @@
             <version>3.5.2</version>
         </dependency>
     </dependencies>
+
 
     <build>
         <plugins>

@@ -5,117 +5,164 @@ import model.Produto;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
 
 public class CadastroProdutoFrame extends JFrame {
 
-    // 🌈 Paleta de cores personalizada
-    private final Color MELON = new Color(255, 188, 181);
-    private final Color BURNT_SIENNA = new Color(201, 125, 96);
-    private final Color TEXT_COLOR = new Color(51, 51, 51);
-    private final Color CAPUT_MORTUUM = new Color(99, 55, 44);
-    private final Color ALMOND = new Color(242, 229, 215);
-
     public CadastroProdutoFrame() {
-        // Configurações da janela
         setTitle("Cadastrar Produto");
-        setSize(500, 400);
+        setSize(450, 360);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
         setLocationRelativeTo(null);
+        setResizable(false);
 
-        // Título
+        // Criando painel principal
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.decode("#F7F7F7"));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+        // Título estilizado
         JLabel titleLabel = new JLabel("Cadastro de Produto", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(TEXT_COLOR);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        add(titleLabel, BorderLayout.NORTH);
+        titleLabel.setForeground(Color.decode("#5A47AB"));
+        panel.add(titleLabel, gbc);
 
-        // Painel central (formulário)
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-        formPanel.setBackground(ALMOND);
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        // Criando campos estilizados
+        JTextField txtNome = criarCampoTexto("Nome do Produto");
+        JPanel precoPanel = criarPainelPreco();
+        JTextField txtQuantidade = criarCampoTexto("Quantidade");
 
-        JLabel lblNome = new JLabel("Nome:");
-        lblNome.setForeground(TEXT_COLOR);
-        JTextField txtNome = new JTextField();
+        panel.add(txtNome, gbc);
+        panel.add(precoPanel, gbc);
+        panel.add(txtQuantidade, gbc);
 
-        JLabel lblPreco = new JLabel("Preço:");
-        lblPreco.setForeground(TEXT_COLOR);
-        JTextField txtPreco = new JTextField();
+        // Criando botões
+        JButton btnSalvar = criarBotao("Salvar", "#5A47AB", "#483C9B");
+        JButton btnCancelar = criarBotao("Cancelar", "#E74C3C", "#C0392B");
 
-        JLabel lblQuantidade = new JLabel("Quantidade:");
-        lblQuantidade.setForeground(TEXT_COLOR);
-        JTextField txtQuantidade = new JTextField();
-
-        formPanel.add(lblNome);
-        formPanel.add(txtNome);
-        formPanel.add(lblPreco);
-        formPanel.add(txtPreco);
-        formPanel.add(lblQuantidade);
-        formPanel.add(txtQuantidade);
-        add(formPanel, BorderLayout.CENTER);
-
-        // Painel de botões
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        buttonPanel.setBackground(ALMOND);
-
-        JButton btnSalvar = criarBotao("Salvar", MELON);
-        JButton btnCancelar = criarBotao("Cancelar", CAPUT_MORTUUM);
-
-        buttonPanel.add(btnSalvar);
-        buttonPanel.add(btnCancelar);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        // Ação do botão "Salvar"
+        // Ação do botão Salvar
         btnSalvar.addActionListener(e -> {
             try {
                 String nome = txtNome.getText().trim();
-                double preco = Double.parseDouble(txtPreco.getText().trim());
+                double preco = converterPreco(((JTextField) precoPanel.getComponent(1)).getText());
                 int quantidade = Integer.parseInt(txtQuantidade.getText().trim());
 
                 Produto produto = new Produto(nome, preco, quantidade);
                 ProdutoDAO.cadastrarProduto(produto);
 
-                JOptionPane.showMessageDialog(this,
-                        "Produto cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Produto cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 dispose();
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Por favor, insira valores válidos para preço e quantidade.", "Erro", JOptionPane.ERROR_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Erro ao cadastrar produto: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Por favor, insira valores válidos!", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // Ação do botão "Cancelar"
         btnCancelar.addActionListener(e -> dispose());
 
+        // Criando painel para os botões
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        buttonPanel.setBackground(Color.decode("#F7F7F7"));
+        buttonPanel.add(btnSalvar);
+        buttonPanel.add(Box.createHorizontalStrut(20));
+        buttonPanel.add(btnCancelar);
+
+        panel.add(buttonPanel, gbc);
+
+        add(panel);
         setVisible(true);
     }
 
-    // Criação de botões estilizados
-    private JButton criarBotao(String texto, Color corFundo) {
-        JButton botao = new JButton(texto);
-        botao.setFont(new Font("Arial", Font.BOLD, 18));
-        botao.setForeground(Color.WHITE);
-        botao.setBackground(corFundo);
-        botao.setFocusPainted(false);
-        botao.setPreferredSize(new Dimension(120, 40));
-        botao.setBorder(BorderFactory.createLineBorder(BURNT_SIENNA));
+    // Método para criar campos de texto bonitos
+    private JTextField criarCampoTexto(String placeholder) {
+        JTextField campo = new JTextField(20);
+        campo.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        campo.setForeground(Color.decode("#333333"));
+        campo.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.decode("#CCCCCC"), 1, true),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        campo.setBackground(Color.decode("#FFFFFF"));
+        campo.setText(placeholder);
 
-        // Efeito hover
-        botao.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                botao.setBackground(BURNT_SIENNA);
+        campo.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (campo.getText().equals(placeholder)) {
+                    campo.setText("");
+                }
             }
 
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                botao.setBackground(corFundo);
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (campo.getText().isEmpty()) {
+                    campo.setText(placeholder);
+                }
             }
         });
+
+        return campo;
+    }
+
+    // Método para criar o painel de preço com "R$" fixo
+    private JPanel criarPainelPreco() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.decode("#CCCCCC"), 1, true),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+
+        JLabel lblPrefixo = new JLabel("R$ ");
+        lblPrefixo.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblPrefixo.setForeground(Color.decode("#333333"));
+
+        JTextField campoPreco = new JTextField();
+        campoPreco.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        campoPreco.setForeground(Color.decode("#333333"));
+        campoPreco.setBorder(null);
+        campoPreco.setBackground(Color.decode("#FFFFFF"));
+        campoPreco.setHorizontalAlignment(JTextField.LEFT);
+
+        panel.add(lblPrefixo, BorderLayout.WEST);
+        panel.add(campoPreco, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    // Método para converter o valor do campo de preço corretamente
+    private double converterPreco(String texto) throws NumberFormatException {
+        texto = texto.replace(",", ".").trim();
+        return Double.parseDouble(texto);
+    }
+
+    // Método para criar botões bonitos com hover
+    private JButton criarBotao(String texto, String corPrincipal, String corHover) {
+        JButton botao = new JButton(texto);
+        botao.setFont(new Font("SansSerif", Font.BOLD, 16));
+        botao.setForeground(Color.WHITE);
+        botao.setBackground(Color.decode(corPrincipal));
+        botao.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.decode("#333333"), 1, true),
+                BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
+        botao.setFocusPainted(false);
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        botao.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                botao.setBackground(Color.decode(corHover));
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                botao.setBackground(Color.decode(corPrincipal));
+            }
+        });
+
         return botao;
     }
 }
